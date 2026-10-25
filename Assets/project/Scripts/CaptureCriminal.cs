@@ -6,6 +6,8 @@ public class CaptureCriminal : MonoBehaviour
     public float catchTime = 1f;
     public TMP_Text messageText;
     public CriminalCarAI criminalAI;
+    public GameObject levelCompletePanel;
+    public AudioSource gameOverSound;
 
     private float timer = 0f;
     private bool caught = false;
@@ -24,6 +26,7 @@ public class CaptureCriminal : MonoBehaviour
                 messageText.text = "CRIMINAL CAUGHT!";
 
                 criminalAI.StopCar();
+                Invoke("ShowLevelComplete", 0.5f);
             }
         }
     }
@@ -35,4 +38,13 @@ public class CaptureCriminal : MonoBehaviour
             timer = 0f;
         }
     }
+  void ShowLevelComplete()
+{
+    levelCompletePanel.SetActive(true);
+
+    if (gameOverSound != null)
+    {
+        gameOverSound.Play();
+    }
+}
 }
