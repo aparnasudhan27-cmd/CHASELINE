@@ -1,6 +1,6 @@
-
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class Level3EndManager : MonoBehaviour
 {
@@ -8,24 +8,47 @@ public class Level3EndManager : MonoBehaviour
     public Transform policeCar;
     public Transform criminalCar;
 
-    [Header("Settings")]
+    [Header("Catch Settings")]
     public float catchDistance = 5f;
 
-    [Header("UI Message")]
+    [Header("Game Over UI")]
     public TMP_Text gameEndedText;
 
+    [Header("Game State")]
     public bool gameEnded = false;
     public bool criminalCaught = false;
 
-    void Start()
+    public GameObject RetryButton;
+
+    private void Start()
     {
+        gameEnded = false;
+        criminalCaught = false;
+
         if (gameEndedText != null)
         {
             gameEndedText.gameObject.SetActive(false);
         }
+        else
+        {
+            Debug.LogWarning(
+                "Game Ended Text is not assigned!"
+            );
+        }
+
+        if (RetryButton != null)
+        {
+            RetryButton.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Retry Button is not assigned!"
+            );
+        }
     }
 
-    void Update()
+    private void Update()
     {
         if (gameEnded)
             return;
@@ -44,6 +67,7 @@ public class Level3EndManager : MonoBehaviour
         }
     }
 
+    // Called by PoliceTrafficCollision when police hits traffic.
     public void OnTrafficCollision()
     {
         if (gameEnded)
@@ -52,7 +76,7 @@ public class Level3EndManager : MonoBehaviour
         EndGame(false);
     }
 
-    void EndGame(bool caught)
+    private void EndGame(bool caught)
     {
         if (gameEnded)
             return;
@@ -70,18 +94,19 @@ public class Level3EndManager : MonoBehaviour
                 : "GAME ENDED!\nMISSION FAILED!";
 
             gameEndedText.gameObject.SetActive(true);
+        }
 
-            Debug.Log("Game-ended message displayed.");
-        }
-        else
+        if (RetryButton != null)
         {
-            Debug.LogError(
-                "GameEndedText is not assigned in the Inspector!"
-            );
+            RetryButton.SetActive(true);
         }
+
+        Debug.Log(caught
+            ? "LEVEL 3 COMPLETED! CRIMINAL CAUGHT!"
+            : "MISSION FAILED! POLICE CRASHED INTO TRAFFIC!");
     }
 
-    void StopCar(Transform car)
+    private void StopCar(Transform car)
     {
         if (car == null)
             return;
@@ -94,5 +119,9 @@ public class Level3EndManager : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
         }
+    }
+    public void RetryLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
