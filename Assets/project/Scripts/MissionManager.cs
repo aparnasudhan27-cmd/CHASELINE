@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 public class MissionManager : MonoBehaviour
 {
+    [Header("Level Settings")]
+    public bool useCaptureCriminalScript = false;
+
     [Header("Police Car")]
     public Transform policeCar;
     public float catchDistance = 5f;
@@ -14,27 +17,32 @@ public class MissionManager : MonoBehaviour
     public Transform finalWaypoint;
     public float triggerDistance = 5f;
 
-    [Header("UI")]
+    [Header("UI Messages")]
     public TMP_Text countdownText;
     public TMP_Text resultText;
     public TMP_Text catchMessage;
+    public TMP_Text levelCompleteText;
+
+    [Header("UI Buttons")]
     public Button retryButton;
+    public Button nextLevelButton;
 
     [Header("Escape Timer")]
     public float escapeTime = 10f;
 
+    [Header("Next Level")]
+    public string nextLevelSceneName = "Level3";
+
     private float timer;
-    private bool timerStarted = false;
-    private bool missionEnded = false;
+    private bool timerStarted;
+    private bool missionEnded;
 
     private Rigidbody policeRb;
     private Rigidbody criminalRb;
 
     void Start()
     {
-        // Ensure time is running when this scene starts.
         Time.timeScale = 1f;
-
         timer = escapeTime;
 
         if (policeCar != null)
@@ -43,7 +51,6 @@ public class MissionManager : MonoBehaviour
         if (criminalCar != null)
             criminalRb = criminalCar.GetComponent<Rigidbody>();
 
-        // Hide UI messages at the beginning.
         if (countdownText != null)
             countdownText.gameObject.SetActive(false);
 
@@ -53,7 +60,10 @@ public class MissionManager : MonoBehaviour
         if (catchMessage != null)
             catchMessage.gameObject.SetActive(false);
 
-        // Configure retry button.
+        // In Level 2, CaptureCriminal handles the success panel.
+        if (levelCompleteText != null)
+            levelCompleteText.gameObject.SetActive(false);
+
         if (retryButton != null)
         {
             retryButton.gameObject.SetActive(false);
@@ -61,7 +71,22 @@ public class MissionManager : MonoBehaviour
             retryButton.onClick.AddListener(RetryLevel);
         }
 
-        Debug.Log("Level 3 Mission Ready");
+        // CaptureCriminal handles the Level 2 success panel/button.
+        if (nextLevelButton != null)
+        {
+            if (!useCaptureCriminalScript)
+            {
+                nextLevelButton.gameObject.SetActive(false);
+                nextLevelButton.onClick.RemoveListener(LoadNextLevel);
+                nextLevelButton.onClick.AddListener(LoadNextLevel);
+            }
+            else
+            {
+                nextLevelButton.gameObject.SetActive(false);
+            }
+        }
+
+        Debug.Log("Mission Ready");
     }
 
     void Update()
@@ -72,8 +97,9 @@ public class MissionManager : MonoBehaviour
         if (criminalCar == null)
             return;
 
-        // 1. Check if the police catch the criminal.
-        if (policeCar != null)
+        // Level 1 uses the distance-based capture system.
+        // Level 2 uses CaptureCriminal.cs instead.
+        if (!useCaptureCriminalScript && policeCar != null)
         {
             float distance = Vector3.Distance(
                 policeCar.position,
@@ -87,7 +113,7 @@ public class MissionManager : MonoBehaviour
             }
         }
 
-        // 2. Check distance to the final waypoint.
+        // Start the escape countdown near the final waypoint.
         if (finalWaypoint == null)
             return;
 
@@ -96,7 +122,6 @@ public class MissionManager : MonoBehaviour
             finalWaypoint.position
         );
 
-        // 3. Start countdown near the final waypoint.
         if (!timerStarted && waypointDistance <= triggerDistance)
         {
             timerStarted = true;
@@ -112,7 +137,6 @@ public class MissionManager : MonoBehaviour
             Debug.Log("Escape countdown started!");
         }
 
-        // 4. Update countdown and end mission on timeout.
         if (timerStarted)
         {
             timer -= Time.deltaTime;
@@ -125,13 +149,11 @@ public class MissionManager : MonoBehaviour
             }
 
             if (timer <= 0f)
-            {
                 EndMission();
-            }
         }
     }
 
-    // Called when the police catch the criminal.
+    // Used by Level 1 when the police car gets close enough.
     void EndCaught()
     {
         if (missionEnded)
@@ -147,26 +169,30 @@ public class MissionManager : MonoBehaviour
 
         if (catchMessage != null)
         {
-            catchMessage.text =
-                "CRIMINAL CAUGHT!\nMISSION SUCCESS!";
-
+            catchMessage.text = "CRIMINAL CAUGHT!";
             catchMessage.color = Color.green;
             catchMessage.gameObject.SetActive(true);
         }
-        else
+
+        if (levelCompleteText != null)
         {
-            Debug.LogError("Catch Message is not assigned!");
+            levelCompleteText.text = "LEVEL COMPLETE!";
+            levelCompleteText.color = Color.green;
+            levelCompleteText.gameObject.SetActive(true);
         }
 
         if (retryButton != null)
-            retryButton.gameObject.SetActive(true);
+            retryButton.gameObject.SetActive(false);
+
+        if (nextLevelButton != null)
+            nextLevelButton.gameObject.SetActive(true);
 
         StopCars();
 
-        Debug.Log("CRIMINAL CAUGHT! MISSION SUCCESS!");
+        Debug.Log("LEVEL COMPLETE!");
     }
 
-    // Called when the escape timer reaches zero.
+    // Used when the criminal escapes.
     void EndMission()
     {
         if (missionEnded)
@@ -180,30 +206,28 @@ public class MissionManager : MonoBehaviour
         if (catchMessage != null)
             catchMessage.gameObject.SetActive(false);
 
+        if (levelCompleteText != null)
+            levelCompleteText.gameObject.SetActive(false);
+
         if (resultText != null)
         {
-            resultText.text =
-                "CRIMINAL ESCAPED!\nMISSION FAILED!";
-
+            resultText.text = "CRIMINAL ESCAPED!\nMISSION FAILED!";
             resultText.color = Color.red;
             resultText.gameObject.SetActive(true);
-        }
-        else
-        {
-            Debug.LogError("Result Text is not assigned!");
         }
 
         if (retryButton != null)
             retryButton.gameObject.SetActive(true);
 
-        Debug.Log("CRIMINAL ESCAPED! MISSION FAILED!");
+        if (nextLevelButton != null)
+            nextLevelButton.gameObject.SetActive(false);
 
-        // Stop cars and freeze gameplay.
         StopCars();
         Time.timeScale = 0f;
+
+        Debug.Log("MISSION FAILED!");
     }
 
-    // Stop the cars without disabling the UI.
     void StopCars()
     {
         if (criminalRb != null)
@@ -221,7 +245,6 @@ public class MissionManager : MonoBehaviour
         }
     }
 
-    // Retry the current level.
     public void RetryLevel()
     {
         Time.timeScale = 1f;
@@ -230,4 +253,18 @@ public class MissionManager : MonoBehaviour
             SceneManager.GetActiveScene().buildIndex
         );
     }
+
+    public void LoadNextLevel()
+    {
+        Time.timeScale = 1f;
+
+        if (string.IsNullOrWhiteSpace(nextLevelSceneName))
+        {
+            Debug.LogError("Next Level Scene Name is empty!");
+            return;
+        }
+
+        SceneManager.LoadScene(nextLevelSceneName);
+    }
 }
+
