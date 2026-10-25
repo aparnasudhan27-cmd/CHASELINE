@@ -4,19 +4,17 @@ public class PoliceTrafficCollision : MonoBehaviour
 {
     public Level3EndManager endManager;
 
-    private bool crashDetected = false;
-
     private void OnCollisionEnter(Collision collision)
     {
-        CheckTraffic(collision.transform);
+        HandleCrash(collision.transform);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        CheckTraffic(other.transform);
+        HandleCrash(other.transform);
     }
 
-    private void CheckTraffic(Transform hitObject)
+    private void HandleCrash(Transform hitObject)
     {
         Transform current = hitObject;
 
@@ -24,12 +22,7 @@ public class PoliceTrafficCollision : MonoBehaviour
         {
             if (current.CompareTag("TrafficCar"))
             {
-                if (crashDetected)
-                    return;
-
-                crashDetected = true;
-
-                Debug.Log("TRAFFIC CRASH DETECTED!");
+                Debug.Log("TRAFFIC CRASH! ENDING GAME!");
 
                 if (endManager != null)
                 {
@@ -38,7 +31,7 @@ public class PoliceTrafficCollision : MonoBehaviour
                 else
                 {
                     Debug.LogError(
-                        "Assign Level3EndManager in the Inspector!"
+                        "End Manager is not assigned!"
                     );
                 }
 
@@ -47,8 +40,5 @@ public class PoliceTrafficCollision : MonoBehaviour
 
             current = current.parent;
         }
-
-        Debug.Log("Hit object is not tagged TrafficCar: " +
-                  hitObject.name);
     }
 }
