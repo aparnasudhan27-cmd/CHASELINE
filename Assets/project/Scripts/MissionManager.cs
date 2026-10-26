@@ -40,6 +40,7 @@ public class MissionManager : MonoBehaviour
     private Rigidbody policeRb;
     private Rigidbody criminalRb;
 
+    public AudioSource captureSound;
     void Start()
     {
         Time.timeScale = 1f;
@@ -221,6 +222,9 @@ public class MissionManager : MonoBehaviour
 
         if (nextLevelButton != null)
             nextLevelButton.gameObject.SetActive(false);
+
+        if (captureSound != null)
+            captureSound.Play();
 
         StopCars();
         Time.timeScale = 0f;
